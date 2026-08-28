@@ -17,17 +17,21 @@ export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
 if [ -s "$NVM_DIR/nvm.sh" ]; then
   # shellcheck disable=SC1091
   . "$NVM_DIR/nvm.sh"
-  # Ensure a Node 22.x (>= 22.16, required by the modules' engines) is available.
-  if ! nvm use 22 >/dev/null 2>&1; then
+  # Ensure a Node 22.x (>= 22.16, required by the modules' engines) is installed.
+  if ! ls -d "$NVM_DIR"/versions/node/v22.*/bin >/dev/null 2>&1; then
     nvm install 22 >/dev/null 2>&1 || true
-    nvm use 22 >/dev/null 2>&1 || true
   fi
-  # Prepend the selected Node's bin dir so it beats any older Node earlier on PATH.
-  _NODE_BIN="$(dirname "$(nvm which current 2>/dev/null || command -v node)")"
-  case ":$PATH:" in
-    *":$_NODE_BIN:"*) : ;;
-    *) export PATH="$_NODE_BIN:$PATH" ;;
-  esac
+  # Select the highest installed nvm Node 22.x bin dir directly. We do NOT rely
+  # on `nvm use`: the base image pre-injects an older Node 22.14 via /exec-daemon
+  # which nvm treats as the active version and refuses to switch away from, so
+  # `nvm use 22` is a no-op that leaves the old Node winning. Instead we resolve
+  # the bin dir ourselves and prepend it unconditionally (stripping any existing
+  # occurrence first) so the nvm-managed Node is always first on PATH.
+  _NODE_BIN="$(ls -d "$NVM_DIR"/versions/node/v22.*/bin 2>/dev/null | sort -V | tail -1)"
+  if [ -n "$_NODE_BIN" ]; then
+    PATH="$(printf '%s' ":$PATH:" | sed -e "s#:$_NODE_BIN:#:#g" -e 's#^:##' -e 's#:$##')"
+    export PATH="$_NODE_BIN:$PATH"
+  fi
 fi
 
 # Pin pnpm to the version the repo expects (v10.x reads the modules' pnpm.*
