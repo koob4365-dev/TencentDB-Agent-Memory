@@ -30,8 +30,15 @@ if [ -s "$NVM_DIR/nvm.sh" ]; then
   esac
 fi
 
-# Enable corepack so pnpm resolves consistently.
-corepack enable >/dev/null 2>&1 || true
+# Pin pnpm to the version the repo expects (v10.x reads the modules' pnpm.*
+# config that newer majors ignore). Avoid a bare `corepack enable`, which would
+# resolve pnpm to "latest" and drift the version between runs.
+export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+if ! command -v pnpm >/dev/null 2>&1 || [ "$(pnpm -v 2>/dev/null | cut -d. -f1)" != "10" ]; then
+  corepack prepare pnpm@10.33.3 --activate >/dev/null 2>&1 \
+    || npm install -g pnpm@10.33.3 >/dev/null 2>&1 \
+    || true
+fi
 
 # Local LLM credentials: real values should be provided via Cloud Agent secrets.
 # Placeholders let the services boot and pass /health without a live key; actual

@@ -7,6 +7,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 . "$SCRIPT_DIR/env.sh"
 
+# Run non-interactively: pnpm must not prompt (e.g. to purge a modules dir) when
+# there is no TTY, as in the Cloud Agent install phase.
+export CI=true
+
 cd "$REPO_ROOT"
 
 echo "==> Node: $(node -v)  npm: $(npm -v)  pnpm: $(pnpm -v)"
