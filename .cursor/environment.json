@@ -1,0 +1,27 @@
+{
+  "name": "TencentDB-Agent-Memory",
+  "install": "bash .cursor/install.sh",
+  "ports": [8420, 8421, 8096, 8123, 5173],
+  "terminals": [
+    {
+      "name": "memory-core",
+      "command": "source .cursor/env.sh && cd MemoryCore && export TDAI_GATEWAY_CONFIG=\"$PWD/tdai-gateway.standalone.yaml\" && exec node --import tsx src/gateway/server.ts"
+    },
+    {
+      "name": "memory-knowledge",
+      "command": "source .cursor/env.sh && cd MemoryKnowledge && exec pnpm dev"
+    },
+    {
+      "name": "memory-proxy",
+      "command": "source .cursor/env.sh && cd MemoryProxy && exec npm run start:config"
+    },
+    {
+      "name": "memory-panel",
+      "command": "source .cursor/env.sh && cd MemoryPanel && exec pnpm dev"
+    },
+    {
+      "name": "panel-web",
+      "command": "source .cursor/env.sh && cd MemoryPanel/web && exec npm run dev"
+    }
+  ]
+}
